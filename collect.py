@@ -38,9 +38,9 @@ for i in range(len(feed['entries'])):
     doc_id, doc_rev = dbv.save(e)
     print doc_id, doc_rev
 
-for docid in dbv:
-  e = dbv.get(docid)
-  print e['brewery'], e['beer'], e['venue']
+#for docid in dbv:
+#  e = dbv.get(docid)
+#  print e['brewery'], e['beer'], e['venue']
 
 beer_query = "Pliny The Younger"
 code = '''function(doc) { if(doc.beer == '%s') emit(doc.frm, null); }''' % beer_query
