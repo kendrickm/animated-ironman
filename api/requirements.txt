@@ -1,0 +1,6 @@
+foursquare
+flask
+couchdb
+flask-couchdb
+simplejson
+yaml
