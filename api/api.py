@@ -26,11 +26,13 @@ docs_venue = ViewDefinition('docs', 'venue',
 @app.route('/location/<venue>', methods=['POST'])
 def lookup_venue(venue):
     try:
-      client = foursquare.Foursquare(client_id=config['CLIENT_ID'], client_secret=config['CLIENT_SECRET'], version=config['API_VERSION'])
-      v_data = client.venues(venue)['venue']
-      name = v_data['name']
+      client = foursquare.Foursquare(client_id=config['CLIENT_ID'],
+      client_secret=config['CLIENT_SECRET'], version=config['API_VERSION'])
+
+      v_data  = client.venues(venue)['venue']
+      name    = v_data['name']
       twitter = v_data['contact']['twitter']
-      fb_id = v_data['contact']['facebook']
+      fb_id   = v_data['contact']['facebook']
     except ParamError:
       return "Invalid id, check foursquare ID"
 
@@ -66,8 +68,8 @@ def add_doc():
 
 app.config.update(
         DEBUG = True,
-        COUCHDB_SERVER = db["db_config"]["COUCHDB_SERVER"],
-        COUCHDB_DATABASE = db["db_config"]["COUCHDB_DATABASE"]
+        COUCHDB_SERVER = db["COUCHDB_SERVER"],
+        COUCHDB_DATABASE = db["COUCHDB_DATABASE"]
 )
 
 #if __name__ == "__main__":
