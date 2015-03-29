@@ -1,5 +1,5 @@
 db:
-  COUCHDB_URL: 'http://mydb:5984'
+  COUCHDB_SERVER: 'http://mydb:5984'
   COUCHDB_DATABASE: 'mydb'
 foursquare:
   CLIENT_ID: 'ID_HERE'

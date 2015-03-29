@@ -3,6 +3,7 @@ import simplejson
 import foursquare
 from flask import Flask, g, request
 from couchdb.design import ViewDefinition
+from foursquare import ParamError
 import flaskext.couchdb
 import yaml
 #
@@ -12,7 +13,7 @@ import yaml
 
 app = Flask(__name__)
 
-config     = yaml.load(file('config/config.yaml', 'r'))
+config     = yaml.load(file('config/config.yml', 'r'))
 db_config  = config['db']
 fsq_config = config['foursquare']
 
@@ -26,8 +27,8 @@ docs_venue = ViewDefinition('docs', 'venue',
 @app.route('/location/<venue>', methods=['POST'])
 def lookup_venue(venue):
     try:
-      client = foursquare.Foursquare(client_id=config['CLIENT_ID'],
-      client_secret=config['CLIENT_SECRET'], version=config['API_VERSION'])
+      client = foursquare.Foursquare(client_id=fsq_config['CLIENT_ID'],
+      client_secret=fsq_config['CLIENT_SECRET'], version=fsq_config['API_VERSION'])
 
       v_data  = client.venues(venue)['venue']
       name    = v_data['name']
@@ -68,8 +69,8 @@ def add_doc():
 
 app.config.update(
         DEBUG = True,
-        COUCHDB_SERVER = db["COUCHDB_SERVER"],
-        COUCHDB_DATABASE = db["COUCHDB_DATABASE"]
+        COUCHDB_SERVER = db_config["COUCHDB_SERVER"],
+        COUCHDB_DATABASE = db_config["COUCHDB_DATABASE"]
 )
 
 #if __name__ == "__main__":
@@ -78,4 +79,4 @@ manager.setup(app)
 manager.add_viewdef(docs_beer)  # Install the view
 manager.add_viewdef(docs_venue)  # Install the view
 manager.sync(app)
-app.run(host='0.0.0.0', port=5000)
+app.run(host='0.0.0.0', port=5000, debug=True)
