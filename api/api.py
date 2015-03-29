@@ -1,20 +1,38 @@
 #!/usr/bin/python
 import simplejson
+import foursquare
 from flask import Flask, g, request
 from couchdb.design import ViewDefinition
 import flaskext.couchdb
 import yaml
+#
+# with open('db.yaml', 'r') as f:
+#     db = yaml.load(f)
 
-with open('db.yaml', 'r') as f:
-    db = yaml.load(f)
 
 app = Flask(__name__)
+
+config     = yaml.load(file('config/config.yaml', 'r'))
+db_config  = config['db']
+fsq_config = config['foursquare']
 
 docs_beer = ViewDefinition('docs', 'beer',
                                 'function(doc) { emit(doc.beer, doc);}')
 
 docs_venue = ViewDefinition('docs', 'venue',
                                 'function(doc) { emit(doc.venue, doc);}')
+
+
+@app.route('/location/<venue>', methods=['POST'])
+def lookup_venue(venue):
+    try:
+      client = foursquare.Foursquare(client_id=config['CLIENT_ID'], client_secret=config['CLIENT_SECRET'], version=config['API_VERSION'])
+      v_data = client.venues(venue)['venue']
+      name = v_data['name']
+      twitter = v_data['contact']['twitter']
+      fb_id = v_data['contact']['facebook']
+    except ParamError:
+      return "Invalid id, check foursquare ID"
 
 
 @app.route("/beer/<id>")

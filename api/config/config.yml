@@ -1,0 +1,6 @@
+couch:
+  url: 'http://mydb:5984'
+foursquare:
+  CLIENT_ID: 'ID_HERE'
+  CLIENT_SECRET: 'SECRET_HERE'
+  API_VERSION: 20150318
