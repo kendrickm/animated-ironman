@@ -53,7 +53,6 @@ def lookup_venue(venue, untappd=None):
 
     return simplejson.dumps(loc_db.get(venue)) #Return a json value of our db record
 
-
 #
 # def lookup_untappd():
 #
