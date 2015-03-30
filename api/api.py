@@ -7,7 +7,7 @@ import couchdb
 from foursquare import ParamError
 import flaskext.couchdb
 import yaml
-from location import lookup_venue
+from location import lookup_venue, lookup_untappd, lookup_twitter, lookup_facebook
 import config
 
 #
@@ -36,6 +36,16 @@ def location_venue(venue):
 def location_venue_untappd(venue, untappd):
   return lookup_venue(venue, untappd)
 
+@app.route('/locations')
+def location_lookup():
+  if request.args.get('type') == "untappd":
+      return  simplejson.dumps(lookup_untappd())
+  if request.args.get('type') == "twitter":
+      return  simplejson.dumps(lookup_twitter())
+  if request.args.get('type') == "facebook":
+      return  simplejson.dumps(lookup_facebook())
+  else:
+      return "Not yet implemented"
 
 @app.route("/beer/<id>")
 def get_beer(id):
