@@ -16,11 +16,18 @@ def lookup_venue(venue, untappd=None):
     except ParamError:
       return "Invalid id, check foursquare ID"
 
+    twitter = fb_id = ""
+    contact_info = v_data['contact']
+    if 'twitter' in contact_info.keys():
+        twitter =  contact_info['twitter']
+    if 'facebook' in contact_info.keys():
+        fb_id   = contact_info['facebook']
+
     new_doc = {
     '_id': venue,
     'name':  v_data['name'],
-    'twitter': v_data['contact']['twitter'],
-    'fb_id': v_data['contact']['facebook']
+    'twitter': twitter,
+    'fb_id': fb_id,
     }
 
     if untappd: #We passed in an untappd id
@@ -36,9 +43,19 @@ def lookup_venue(venue, untappd=None):
         update = True
     else:
         for key in new_doc: #Check each key for something different, if so then we'll update the db
-            if new_doc[key] != doc[key]:
+            try:
+                if new_doc[key] != doc[key]:
+                    update = True
+            except KeyError:
                 update = True
     if update:
-        loc_db.save(doc)
+        loc_db.save(new_doc)
 
     return simplejson.dumps(loc_db.get(venue)) #Return a json value of our db record
+
+#
+# def lookup_untappd():
+#
+# def lookup_twitter():
+#
+# def lookup_facebook():
