@@ -2,6 +2,7 @@ import couchdb
 import config
 import foursquare
 import simplejson
+from flask import jsonify
 
 #Takes a foursquare id and optional untappd venue id and uses that to build a
 #location record our scrapers can use
@@ -53,9 +54,39 @@ def lookup_venue(venue, untappd=None):
 
     return simplejson.dumps(loc_db.get(venue)) #Return a json value of our db record
 
-#
-# def lookup_untappd():
-#
-# def lookup_twitter():
-#
-# def lookup_facebook():
+
+def lookup_untappd():
+  query = '''function(doc) {
+   emit(doc.untappd_id);
+   }'''
+  server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
+  loc_db = server['locations']
+  untappd_ids = []
+  results = loc_db.query(query)
+  for r in results:
+      untappd_ids.append(r.key)
+  return untappd_ids
+
+def lookup_twitter():
+    query = '''function(doc) {
+     emit(doc.twitter);
+     }'''
+    server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
+    loc_db = server['locations']
+    twitter_ids = []
+    results = loc_db.query(query)
+    for r in results:
+        twitter_ids.append(r.key)
+    return twitter_ids
+
+def lookup_facebook():
+    query = '''function(doc) {
+     emit(doc.fb_id);
+     }'''
+    server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
+    loc_db = server['locations']
+    fb_ids = []
+    results = loc_db.query(query)
+    for r in results:
+        fb_ids.append(r.key)
+    return fb_ids
