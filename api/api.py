@@ -1,20 +1,40 @@
 #!/usr/bin/python
 import simplejson
+import foursquare
 from flask import Flask, g, request
 from couchdb.design import ViewDefinition
+import couchdb
+from foursquare import ParamError
 import flaskext.couchdb
 import yaml
+from location import lookup_venue
+import config
 
-with open('db.yaml', 'r') as f:
-    db = yaml.load(f)
+#
+# with open('db.yaml', 'r') as f:
+#     db = yaml.load(f)
+
 
 app = Flask(__name__)
 
+
 docs_beer = ViewDefinition('docs', 'beer',
                                 'function(doc) { emit(doc.beer, doc);}')
-
 docs_venue = ViewDefinition('docs', 'venue',
                                 'function(doc) { emit(doc.venue, doc);}')
+
+
+#Accepts a foursqure id and populates the
+#location database with the information
+@app.route('/location/<venue>', methods=['POST'])
+def location_venue(venue):
+  return lookup_venue(venue)
+
+#Accepts a foursqure id and the untappd location id and populates the
+#location database with the information
+@app.route('/location/<venue>/<untappd>', methods=['POST'])
+def location_venue_untappd(venue, untappd):
+  return lookup_venue(venue, untappd)
 
 
 @app.route("/beer/<id>")
@@ -48,12 +68,13 @@ def add_doc():
 
 app.config.update(
         DEBUG = True,
-        COUCHDB_SERVER = db["db_config"]["COUCHDB_SERVER"],
-        COUCHDB_DATABASE = db["db_config"]["COUCHDB_DATABASE"]
+        COUCHDB_SERVER = config.db_config["COUCHDB_SERVER"],
+        COUCHDB_DATABASE = config.db_config["COUCHDB_DATABASE"]
 )
 
 #if __name__ == "__main__":
 manager = flaskext.couchdb.CouchDBManager()
+loc_manager = flaskext.couchdb.CouchDBManager()
 manager.setup(app)
 manager.add_viewdef(docs_beer)  # Install the view
 manager.add_viewdef(docs_venue)  # Install the view

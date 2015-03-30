@@ -1,0 +1,7 @@
+db:
+  COUCHDB_SERVER: 'http://mydb:5984'
+  COUCHDB_DATABASE: 'mydb'
+foursquare:
+  CLIENT_ID: 'ID_HERE'
+  CLIENT_SECRET: 'SECRET_HERE'
+  API_VERSION: 20150318
