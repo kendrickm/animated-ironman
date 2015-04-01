@@ -5,3 +5,6 @@ foursquare:
   CLIENT_ID: 'ID_HERE'
   CLIENT_SECRET: 'SECRET_HERE'
   API_VERSION: 20150318
+brewerydb:
+  API_KEY: 'KEY_HERE'
+  BASE_URL: 'http://api.brewerydb.com/v2'
