@@ -10,10 +10,6 @@ import yaml
 from location import lookup_venue, lookup_untappd, lookup_twitter, lookup_facebook
 import config
 
-#
-# with open('db.yaml', 'r') as f:
-#     db = yaml.load(f)
-
 
 app = Flask(__name__)
 
