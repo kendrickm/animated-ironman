@@ -72,6 +72,15 @@ def beer_search_by_brewery(brewery_id, search_text):
     print "Looks like nothing found"
     return None
 
+def beer_lookup(beer_id):
+    response = requester("beer/%s" % (beer_id))
+    return response['data']
+
+def brewery_lookup_by_beer(beer_id):
+    response = requester("beer/%s/breweries" % (beer_id))
+    return response['data'][0]
+
+
 #Takes a passed in string and searches for breweries/beers that could be found in the string
 def full_search(text):
     breweries = brewery_search_name(text)

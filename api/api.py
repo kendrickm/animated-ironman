@@ -7,7 +7,8 @@ import couchdb
 from foursquare import ParamError
 import flaskext.couchdb
 import yaml
-from location import lookup_venue, lookup_untappd, lookup_twitter, lookup_facebook
+from location import *
+from brewerydb import full_search, beer_lookup, brewery_lookup_by_beer
 import config
 
 
@@ -20,6 +21,16 @@ docs_venue = ViewDefinition('docs', 'venue',
                                 'function(doc) { emit(doc.venue, doc);}')
 
 
+@app.route('/checkin/<source>', methods=['POST'])
+def new_checkin(source):
+    data = request.json['data']
+    source_id = request.json['source_id']
+    venue = reverse_lookup(source, source_id)
+    beer_id = full_search(data)
+    beer = beer_lookup(beer_id)
+    brewery = brewery_lookup_by_beer(beer_id)
+    return "Checking in to %s with beer %s by brewery %s" % (venue['name'], beer['name'], brewery['name'])
+
 #Accepts a foursqure id and populates the
 #location database with the information
 @app.route('/location/<venue>', methods=['POST'])
@@ -31,6 +42,7 @@ def location_venue(venue):
 @app.route('/location/<venue>/<untappd>', methods=['POST'])
 def location_venue_untappd(venue, untappd):
   return lookup_venue(venue, untappd)
+
 
 @app.route('/locations')
 def location_lookup():
