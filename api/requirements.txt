@@ -3,4 +3,4 @@ flask
 couchdb
 flask-couchdb
 simplejson
-yaml
+requests

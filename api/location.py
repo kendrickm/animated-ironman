@@ -90,3 +90,16 @@ def lookup_facebook():
     for r in results:
         fb_ids.append(r.key)
     return fb_ids
+
+def reverse_lookup(field, search):
+    print "Searching %s for %s" % (field, search)
+    query = '''function(doc) {
+     if(doc.%s == '%s')
+       emit(null, doc);
+     }''' % (field, search)
+    print query
+    server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
+    loc_db = server['locations']
+    results = loc_db.query(query)
+    for r in results:
+        return r.value
