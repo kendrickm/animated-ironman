@@ -8,7 +8,7 @@ from foursquare import ParamError
 import flaskext.couchdb
 import yaml
 from location import *
-from brewerydb import full_search, beer_lookup, brewery_lookup_by_beer
+from brewerydb import brewerydb_full_search, beer_lookup, brewery_lookup_by_beer
 import config
 
 
@@ -21,39 +21,55 @@ docs_venue = ViewDefinition('docs', 'venue',
                                 'function(doc) { emit(doc.venue, doc);}')
 
 
-@app.route('/checkin/<source>', methods=['POST'])
-def new_checkin(source):
+@app.route('/checkin/<source_type>', methods=['POST'])
+def new_checkin(source_type):
+    # print request.json
+    if request.json['needs_review']:
+        print "Saving this request until a review can be made"
+        return "created", 202
     data = request.json['data']
     source_id = request.json['source_id']
-    venue = reverse_lookup(source, source_id)
-    beer_id = full_search(data)
+    source = request.json['source']
+    date = request.json['date']
+
+    venue = reverse_lookup(source_type, source) #TODO Handle a location that doesn't exist
+    #TODO Convert all this to an object
+    beer_id = brewerydb_full_search(data)
     beer = beer_lookup(beer_id)
     brewery = brewery_lookup_by_beer(beer_id)
-    return "Checking in to %s with beer %s by brewery %s" % (venue['name'], beer['name'], brewery['name'])
+
+    print "Storing a checkin from source_type %s with source_id of %s" % (source_type, source_id)
+    print "Checking in to %s with beer %s by brewery %s at %s" % (venue['name'], beer['name'], brewery['name'], date)
+    return "created", 201
 
 #Accepts a foursqure id and populates the
 #location database with the information
 @app.route('/location/<venue>', methods=['POST'])
 def location_venue(venue):
-  return lookup_venue(venue)
+  return add_venue(venue)
 
 #Accepts a foursqure id and the untappd location id and populates the
 #location database with the information
 @app.route('/location/<venue>/<untappd>', methods=['POST'])
 def location_venue_untappd(venue, untappd):
-  return lookup_venue(venue, untappd)
+  return add_venue(venue, untappd)
 
 
 @app.route('/locations')
 def location_lookup():
   if request.args.get('type') == "untappd":
-      return  simplejson.dumps(lookup_untappd())
-  if request.args.get('type') == "twitter":
-      return  simplejson.dumps(lookup_twitter())
-  if request.args.get('type') == "facebook":
-      return  simplejson.dumps(lookup_facebook())
+      ids = lookup('untappd_id')
+  elif request.args.get('type') == "twitter":
+      ids = lookup('twitter')
+  elif request.args.get('type') == "facebook":
+      ids = lookup('fb_id')
   else:
       return "Not yet implemented"
+
+  results = {
+    "search_results":ids
+  }
+  return simplejson.dumps(results)
 
 @app.route("/beer/<id>")
 def get_beer(id):

@@ -9,7 +9,7 @@ auth_info = "key=%s" % (config.bdb_config["API_KEY"]) #Add the api key to all re
 #Base function to make all REST requests
 def requester(path, query_params = ""):
     url = config.bdb_config['BASE_URL'] + "/%s/?%s&%s" % (path, query_params, auth_info)
-    print "Requesting %s" % (url)
+    #print "Requesting %s" % (url)
     r = requests.get(url)
     response = json.loads(r.text)
     if response['status'] == "success":
@@ -50,7 +50,7 @@ def brewery_search_name(text):
         elif lowest_count > brewery_list['totalResults']: #If this is a smaller subset of breweries, use this
             print "This is the new lowest count, should use this now"
             lowest_count = brewery_list['totalResults']
-            breweries = brewery_list
+            brewery_data = brewery_list
 
     return brewery_data
 
@@ -60,15 +60,16 @@ def brewery_search_name(text):
 def beer_search_by_brewery(brewery_id, search_text):
     print "Searching for %s" % (search_text)
     search_words = reversed(search_text.split()) #Since brewery is usually first, starting with the last word
-    beer_list = requester("brewery/%s/beers" %(brewery_id))['data']
-
-    for word in search_words:
-        regex = re.compile("%s.*" % (word)) #Sometimes beers have IPA etc. after them in the official name
-        for beer in beer_list:
-            print "Is %s what we want?" % (beer['name'])
-            if re.match(regex, beer['name']):
-                return beer['id']
-
+    try:
+        beer_list = requester("brewery/%s/beers" %(brewery_id))['data']
+        for word in search_words:
+            regex = re.compile("%s.*" % (word)) #Sometimes beers have IPA etc. after them in the official name
+            for beer in beer_list:
+                print "Is %s what we want?" % (beer['name'])
+                if re.match(regex, beer['name']):
+                    return beer['id']
+    except KeyError:
+        print "No data found, beer must not exist"
     print "Looks like nothing found"
     return None
 
@@ -82,18 +83,22 @@ def brewery_lookup_by_beer(beer_id):
 
 
 #Takes a passed in string and searches for breweries/beers that could be found in the string
-def full_search(text):
+def brewerydb_full_search(text):
     breweries = brewery_search_name(text)
     if breweries['totalResults'] == 1: #Only one brewery returned
         brewery_data = breweries['data'][0]
         print "We are going with %s with id of %s" % (brewery_data['name'], brewery_data['id'])
-        return beer_search_by_brewery(brewery_data['id'], text)
+        regex = re.compile("^%s" % (brewery_data['name']))
+        search_text = regex.sub("", text)
+        return beer_search_by_brewery(brewery_data['id'], search_text)
     else:
         brewery_data = breweries['data']
         count = len(brewery_data)
         print "We have a list of %s breweries to search" % (count)
         for brewery in brewery_data:
             print "Searching %s" % (brewery['name'])
-            beer = beer_search_by_brewery(brewery['id'], text)
+            regex = re.compile("^%s" % (brewery['name']))
+            search_text = regex.sub("", text)
+            beer = beer_search_by_brewery(brewery['id'], search_text)
             if beer != None:
                 return beer
