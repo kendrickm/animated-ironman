@@ -23,21 +23,21 @@ docs_venue = ViewDefinition('docs', 'venue',
 
 @app.route('/checkin/<source_type>', methods=['POST'])
 def new_checkin(source_type):
-    # print request.json
-    if request.json['needs_review']:
-        print "Saving this request until a review can be made"
-        return "created", 202
     data = request.json['data']
     source_id = request.json['source_id']
     source = request.json['source']
     date = request.json['date']
+    update_last_scraped(source_type, source, source_id)
+
+    if request.json['needs_review']:
+        print "Saving this request until a review can be made"
+        return "created", 202
 
     venue = reverse_lookup(source_type, source) #TODO Handle a location that doesn't exist
     #TODO Convert all this to an object
     beer_id = brewerydb_full_search(data)
     beer = beer_lookup(beer_id)
     brewery = brewery_lookup_by_beer(beer_id)
-
     print "Storing a checkin from source_type %s with source_id of %s" % (source_type, source_id)
     print "Checking in to %s with beer %s by brewery %s at %s" % (venue['name'], beer['name'], brewery['name'], date)
     return "created", 201
@@ -60,7 +60,7 @@ def location_lookup():
   if request.args.get('type') == "untappd":
       ids = lookup('untappd_id')
   elif request.args.get('type') == "twitter":
-      ids = lookup('twitter')
+      ids = lookup('twitter', "last_scraped.twitter")
   elif request.args.get('type') == "facebook":
       ids = lookup('fb_id')
   else:
@@ -108,7 +108,6 @@ app.config.update(
 
 #if __name__ == "__main__":
 manager = flaskext.couchdb.CouchDBManager()
-loc_manager = flaskext.couchdb.CouchDBManager()
 manager.setup(app)
 manager.add_viewdef(docs_beer)  # Install the view
 manager.add_viewdef(docs_venue)  # Install the view

@@ -54,24 +54,32 @@ def add_venue(venue, untappd=''):
 
 
 def update_last_scraped(source_type, source, new_id):
-    record = loc_db.get(reverse_lookup(source_type, source))
-    json.loads(record)
-    record['last_update']['source_type'] = new_id
+    record = loc_db.get(reverse_lookup(source_type, source)['_id'])
+    try:
+        record['last_scraped'][source_type] = new_id
+    except KeyError:
+        record['last_scraped'] = {}
+        record['last_scraped'][source_type] = new_id
+    print "New record is %s" % (record)
+    loc_db.save(record)
 
-def lookup(field):
+def lookup(key, value="null"):
      query = '''function(doc) {
          if(doc.%s != ''){
-          emit(doc.%s);
+          emit(doc.%s, doc.%s);
          }
-      }''' % (field, field)
+      }''' % (key, key, value)
      ids = []
      results = loc_db.query(query)
      for r in results:
-      ids.append(r.key)
+      id = {}
+      id['name'] = r.key
+      id['last_scraped'] = r.value
+      ids.append(id)
      return ids
 
 def reverse_lookup(field, search):
-    #print "Searching %s for %s" % (field, search)
+    print "Searching %s for %s" % (field, search)
     query = '''function(doc) {
      if(doc.%s == '%s')
        emit(null, doc);
