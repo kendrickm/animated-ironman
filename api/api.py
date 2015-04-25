@@ -25,9 +25,14 @@ docs_venue = ViewDefinition('docs', 'venue',
 def new_checkin(source_type):
     data = request.json['data']
     source_id = request.json['source_id']
+    dryrun = False
+    if source_id == 'dryrun':
+        dryrun = True
     source = request.json['source']
     date = request.json['date']
-    update_last_scraped(source_type, source, source_id)
+
+    if not dryrun:
+        update_last_scraped(source_type, source, source_id)
 
     if request.json['needs_review']:
         print "Saving this request until a review can be made"
