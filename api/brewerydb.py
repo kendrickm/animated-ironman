@@ -44,25 +44,36 @@ def brewery_search_name(text):
             lowest_count = 1
             return brewery_list
         elif lowest_count == None: #If lowest_count isn't set, this is probably the first in the loop
-            print "Lowest count isn't set, using this as baseline"
+            #print "Lowest count isn't set, using this as baseline"
             lowest_count = brewery_list['totalResults']
             brewery_data = brewery_list
         elif lowest_count > brewery_list['totalResults']: #If this is a smaller subset of breweries, use this
-            print "This is the new lowest count, should use this now"
+            #print "This is the new lowest count, should use this now"
             lowest_count = brewery_list['totalResults']
             brewery_data = brewery_list
 
+    print "We have %s breweries to review" % (lowest_count)
     return brewery_data
 
 
 #Searches passed in brewery id for the search text
+def beer_search_by_brewery(brewery_id, brewery_name, full_search_text):
+    yank_words = ""
+    # print "Checking %s in %s" % (brewery_name, full_search_text)
+    split_names = brewery_name.split(" ")
+    for word in split_names:
+        # print "Checking %s" % (word)
+        if word in full_search_text:
+            yank_words += word
 
-def beer_search_by_brewery(brewery_id, search_text):
-    print "Searching for %s" % (search_text)
-    search_words = reversed(search_text.split()) #Since brewery is usually first, starting with the last word
+
+    print "Removing %s from text" % (yank_words)
+    regex = re.compile("^%s" % (yank_words))
+    search_words = regex.sub("", full_search_text)
+    split_words = search_words.split(" ")
     try:
         beer_list = requester("brewery/%s/beers" %(brewery_id))['data']
-        for word in search_words:
+        for word in split_words:
             regex = re.compile("%s.*" % (word)) #Sometimes beers have IPA etc. after them in the official name
             for beer in beer_list:
                 print "Is %s what we want?" % (beer['name'])
@@ -90,7 +101,7 @@ def brewerydb_full_search(text):
         print "We are going with %s with id of %s" % (brewery_data['name'], brewery_data['id'])
         regex = re.compile("^%s" % (brewery_data['name']))
         search_text = regex.sub("", text)
-        return beer_search_by_brewery(brewery_data['id'], search_text)
+        return beer_search_by_brewery(brewery_data['id'], brewery_data['name'], search_text)
     else:
         brewery_data = breweries['data']
         count = len(brewery_data)
@@ -99,6 +110,6 @@ def brewerydb_full_search(text):
             print "Searching %s" % (brewery['name'])
             regex = re.compile("^%s" % (brewery['name']))
             search_text = regex.sub("", text)
-            beer = beer_search_by_brewery(brewery['id'], search_text)
+            beer = beer_search_by_brewery(brewery['id'], brewery['name'], search_text)
             if beer != None:
                 return beer
