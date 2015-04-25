@@ -60,7 +60,6 @@ def update_last_scraped(source_type, source, new_id):
     except KeyError:
         record['last_scraped'] = {}
         record['last_scraped'][source_type] = new_id
-    print "New record is %s" % (record)
     loc_db.save(record)
 
 def lookup(key, value="null"):
@@ -84,7 +83,6 @@ def reverse_lookup(field, search):
      if(doc.%s == '%s')
        emit(null, doc);
      }''' % (field, search)
-    #print query
     server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
     loc_db = server['locations']
     results = loc_db.query(query)
