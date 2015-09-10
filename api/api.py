@@ -9,6 +9,7 @@ import flaskext.couchdb
 import yaml
 from location import *
 from brewerydb import brewerydb_full_search, beer_lookup, brewery_lookup_by_beer
+from barfight import add_checkin, add_review
 import config
 
 
@@ -20,32 +21,54 @@ docs_beer = ViewDefinition('docs', 'beer',
 docs_venue = ViewDefinition('docs', 'venue',
                                 'function(doc) { emit(doc.venue, doc);}')
 
-
+@app.route('/checkin', methods=['POST'])
 @app.route('/checkin/<source_type>', methods=['POST'])
-def new_checkin(source_type):
+def new_checkin(source_type="raw"):
     data = request.json['data']
     source_id = request.json['source_id']
     dryrun = False
     if source_id == 'dryrun':
         dryrun = True
-    source = request.json['source']
+    if source_type == 'raw':
+        source = "raw"
+    else:
+        source = request.json['source']
     date = request.json['date']
+    try:
+        venue_id = request.json['venue']
+        ven_name = "unknown"
+    except KeyError:
+        venue = reverse_lookup(source_type, source) #TODO Handle a location that doesn't exist
+        venue_id = venue['_id']
+        ven_name = venue['name']
 
-    if not dryrun:
+    if not dryrun and source_type != "raw":
         update_last_scraped(source_type, source, source_id)
 
     if request.json['needs_review']:
-        print "Saving this request until a review can be made"
-        return "created", 202
+        if add_review(data, date, source_type, source_id, venue_id):
+            return "created a review item", 200
+        else:
+            return "An error occured", 500
 
-    venue = reverse_lookup(source_type, source) #TODO Handle a location that doesn't exist
+
     #TODO Convert all this to an object
     beer_id = brewerydb_full_search(data)
+    if not beer_id:
+        if add_review(data, date, source_type, source_id, venue_id):
+            print "Unable to find beer with data: %s" % (data)
+            return "Unable to find beer information. Saving this for a manual review", 200
+        else:
+            return "An error occured", 500
     beer = beer_lookup(beer_id)
     brewery = brewery_lookup_by_beer(beer_id)
     print "Storing a checkin from source_type %s with source_id of %s" % (source_type, source_id)
-    print "Checking in to %s with beer %s by brewery %s at %s" % (venue['name'], beer['name'], brewery['name'], date)
-    return "created", 201
+    print "Checking in to %s with beer %s by brewery %s at %s" % (ven_name, beer['name'], brewery['name'], date)
+    if not dryrun:
+        if add_checkin(beer['name'], brewery['name'], date, source_type, source_id, venue_id):
+            return "created", 201
+        else:
+            return "An error occured", 500
 
 #Accepts a foursqure id and populates the
 #location database with the information

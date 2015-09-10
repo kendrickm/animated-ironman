@@ -1,4 +1,5 @@
-curl -X POST 0.0.0.0:5000/checkin/twitter -H 'content-type:application/json' -d
+#docker start c4aa480149fd
+curl -X POST 0.0.0.0:5000/checkin/twitter -H 'content-type:application/json' -d \
 '{
   "data": "Dogfish Head Beer Thousand",
   "source_id":"dryrun",

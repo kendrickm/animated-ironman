@@ -10,9 +10,9 @@ loc_db = server['locations']
 #Takes a foursquare id and optional untappd venue id and uses that to build a
 #location record our scrapers can use
 def add_venue(venue, untappd=''):
-
-    server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
-    loc_db = server['locations']
+    # 
+    # server = couchdb.client.Server(url=config.db_config['COUCHDB_SERVER'])
+    # loc_db = server['locations']
     try:
       client = foursquare.Foursquare(client_id=config.fsq_config['CLIENT_ID'],
       client_secret=config.fsq_config['CLIENT_SECRET'], version=config.fsq_config['API_VERSION'])

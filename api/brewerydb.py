@@ -3,6 +3,7 @@ import config
 import json
 import urllib
 import re
+from normutil import similar
 
 auth_info = "key=%s" % (config.bdb_config["API_KEY"]) #Add the api key to all requests
 
@@ -52,6 +53,9 @@ def brewery_search_name(text):
             lowest_count = brewery_list['totalResults']
             brewery_data = brewery_list
 
+    if brewery_data is None:
+        print "We were unable to find a brewery"
+        return None
     print "We have %s breweries to review" % (lowest_count)
     return brewery_data
 
@@ -60,29 +64,35 @@ def brewery_search_name(text):
 def beer_search_by_brewery(brewery_id, brewery_name, full_search_text):
     yank_words = ""
     # print "Checking %s in %s" % (brewery_name, full_search_text)
-    split_names = brewery_name.split(" ")
-    for word in split_names:
-        # print "Checking %s" % (word)
-        if word in full_search_text:
-            yank_words += word
+    split_name = brewery_name.split(" ")
+    split_words = full_search_text.split(" ")
+    legit_words = []
 
-
-    print "Removing %s from text" % (yank_words)
-    regex = re.compile("^%s" % (yank_words))
-    search_words = regex.sub("", full_search_text)
-    split_words = search_words.split(" ")
     try:
+        results_list = {}
         beer_list = requester("brewery/%s/beers" %(brewery_id))['data']
         for word in split_words:
-            regex = re.compile("%s.*" % (word)) #Sometimes beers have IPA etc. after them in the official name
-            for beer in beer_list:
-                print "Is %s what we want?" % (beer['name'])
-                if re.match(regex, beer['name']):
-                    return beer['id']
+            print "Now searching %s" % (word)
+            if word in split_name:
+                print "%s looks to be part of the brewery name %s, skipping..." % (word, brewery_name)
+            else:
+                legit_words.append(word)
+                regex = re.compile(".*%s.*" % (word)) #Sometimes beers have IPA etc. after them in the official name
+                for beer in beer_list:
+                    print "Is %s what we want?" % (beer['name'])
+                    if re.match(regex, beer['name']):
+                        print "YESSSSSS"
+                        results_list[beer['id']] = beer['name']
     except KeyError:
         print "No data found, beer must not exist"
-    print "Looks like nothing found"
-    return None
+    if len(results_list) == 0:
+        print "Looks like nothing found"
+        return None
+    elif len(results_list) == 1:
+        return results_list.iterkeys().next()
+    else:
+        print "Found multiple options, gonna give it one more shot!"
+        return hopefully_find(legit_words, results_list)
 
 def beer_lookup(beer_id):
     response = requester("beer/%s" % (beer_id))
@@ -96,6 +106,8 @@ def brewery_lookup_by_beer(beer_id):
 #Takes a passed in string and searches for breweries/beers that could be found in the string
 def brewerydb_full_search(text):
     breweries = brewery_search_name(text)
+    if breweries is None:
+        return None
     if breweries['totalResults'] == 1: #Only one brewery returned
         brewery_data = breweries['data'][0]
         print "We are going with %s with id of %s" % (brewery_data['name'], brewery_data['id'])
@@ -113,3 +125,14 @@ def brewerydb_full_search(text):
             beer = beer_search_by_brewery(brewery['id'], brewery['name'], search_text)
             if beer != None:
                 return beer
+
+def hopefully_find(word_list, beer_dict):
+    search_phrase = " ".join(word_list)
+    print search_phrase
+    for beer_id, name in beer_dict.iteritems():
+        search_percentage = similar(search_phrase, name)
+        if  search_percentage > .75:
+            print "%s is a good bet at %% %s" % (name, search_percentage)
+            return beer_id
+    print "Didn't get anywhere"
+    return False
